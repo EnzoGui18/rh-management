@@ -1,11 +1,30 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from .database import get_db
 from .models import Funcionario, Ponto
 from .schemas import FuncionarioCreate, FuncionarioResponse, PontoCreate, PontoResponse
+import os
 
 router = APIRouter()
 
+# Configurar templates (opcional, se quiser usar Jinja2)
+templates = Jinja2Templates(directory="app/static")
+
+# Rota para servir o frontend
+@router.get("/", response_class=HTMLResponse)
+async def get_frontend(request: Request):
+    # Verifique se o arquivo index.html existe
+    if os.path.exists("app/static/index.html"):
+        with open("app/static/index.html", "r", encoding="utf-8") as file:
+            html_content = file.read()
+        return HTMLResponse(content=html_content)
+    else:
+        # Caso o arquivo não exista, retorne uma mensagem de erro
+        return HTMLResponse(content="<html><body><h1>Página não encontrada</h1></body></html>")
+
+# Restante de suas rotas API
 @router.post("/funcionarios/", response_model=FuncionarioResponse)
 def criar_funcionario(func: FuncionarioCreate, db: Session = Depends(get_db)):
     novo_funcionario = Funcionario(**func.dict())

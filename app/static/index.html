@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de RH</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <header class="bg-blue-600 text-white rounded-lg shadow-md p-6 mb-8">
+            <h1 class="text-3xl font-bold">Sistema de RH</h1>
+            <p class="text-blue-100">Gerenciamento de funcionários e registro de ponto</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Painel de Funcionários -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Funcionários</h2>
+                    <button id="openModalBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-300">
+                        <i class="fas fa-plus mr-2"></i>Novo
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                                <th class="py-3 px-6 text-left">ID</th>
+                                <th class="py-3 px-6 text-left">Nome</th>
+                                <th class="py-3 px-6 text-left">Cargo</th>
+                                <th class="py-3 px-6 text-left">Salário</th>
+                                <th class="py-3 px-6 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="funcionariosTable" class="text-gray-600 text-sm">
+                            <!-- Dados de funcionários serão inseridos aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Painel de Registro de Ponto -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Registro de Ponto</h2>
+                
+                <div class="mb-8">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="funcionarioSelect">
+                            Selecionar Funcionário
+                        </label>
+                        <select id="funcionarioSelect" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            <option value="">Selecione um funcionário</option>
+                            <!-- Opções serão inseridas aqui -->
+                        </select>
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                        <button id="registrarEntrada" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition duration-300 flex-1">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Registrar Entrada
+                        </button>
+                        <button id="registrarSaida" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition duration-300 flex-1">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Registrar Saída
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">Histórico de Pontos</h3>
+                    <div class="overflow-y-auto max-h-64">
+                        <table class="min-w-full bg-white">
+                            <thead>
+                                <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                                    <th class="py-3 px-6 text-left">Horário</th>
+                                    <th class="py-3 px-6 text-left">Tipo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pontosTable" class="text-gray-600 text-sm">
+                                <!-- Registros de ponto serão inseridos aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dashboard Rápido -->
+        <div class="bg-white rounded-lg shadow-md p-6 mt-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-blue-100 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-blue-800">Total de Funcionários</h3>
+                    <p id="totalFuncionarios" class="text-3xl font-bold text-blue-600">-</p>
+                </div>
+                <div class="bg-green-100 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-green-800">Entradas Hoje</h3>
+                    <p id="entradasHoje" class="text-3xl font-bold text-green-600">-</p>
+                </div>
+                <div class="bg-purple-100 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-purple-800">Saídas Hoje</h3>
+                    <p id="saidasHoje" class="text-3xl font-bold text-purple-600">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para adicionar/editar funcionário -->
+    <div id="funcionarioModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full">
+            <h2 id="modalTitle" class="text-2xl font-bold text-gray-800 mb-6">Adicionar Funcionário</h2>
+            
+            <form id="funcionarioForm">
+                <input type="hidden" id="funcionarioId" value="">
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="nome">
+                        Nome
+                    </label>
+                    <input id="nome" type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="cargo">
+                        Cargo
+                    </label>
+                    <input id="cargo" type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="salario">
+                        Salário
+                    </label>
+                    <input id="salario" type="number" min="0" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="closeModalBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md transition duration-300">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-300">
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast para notificações -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-md shadow-md transform transition-all duration-300 opacity-0 translate-y-2 pointer-events-none">
+        <span id="toastMessage">Operação realizada com sucesso!</span>
+    </div>
+
+    <!-- Importar o JavaScript (agora em um arquivo separado) -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
