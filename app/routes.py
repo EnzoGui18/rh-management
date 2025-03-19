@@ -55,14 +55,23 @@ def deletar_funcionario(funcionario_id: int, db: Session = Depends(get_db)):
 
 @router.post("/ponto/", response_model=PontoResponse)
 def registrar_ponto(ponto: PontoCreate, db: Session = Depends(get_db)):
-    funcionario = db.query(Funcionario).filter(Funcionario.id == ponto.funcionario_id).first()
-    if not funcionario:
-        raise HTTPException(status_code=404, detail="Funcionário não encontrado")
-    novo_ponto = Ponto(**ponto.dict())
-    db.add(novo_ponto)
-    db.commit()
-    db.refresh(novo_ponto)
-    return novo_ponto
+    try:
+        funcionario = db.query(Funcionario).filter(Funcionario.id == ponto.funcionario_id).first()
+        if not funcionario:
+            raise HTTPException(status_code=404, detail="Funcionário não encontrado")
+        
+        # Usar o dicionário do ponto, mas não incluir o horário (deixar que o valor default seja usado)
+        ponto_dict = ponto.dict()
+        
+        novo_ponto = Ponto(**ponto_dict)
+        db.add(novo_ponto)
+        db.commit()
+        db.refresh(novo_ponto)
+        return novo_ponto
+    except Exception as e:
+        logger.error(f"Erro ao registrar ponto: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao registrar ponto: {str(e)}")
 
 @router.get("/ponto/{funcionario_id}", response_model=list[PontoResponse])
 def listar_pontos(funcionario_id: int, db: Session = Depends(get_db)):

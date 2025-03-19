@@ -85,6 +85,25 @@ async function carregarFuncionarios() {
     }
 }
 
+// Função para formatar data e hora considerando o fuso horário
+function formatarDataHora(dataString) {
+    const data = new Date(dataString);
+    
+    // Opções para formatar a data e hora no padrão brasileiro
+    const opcoes = { 
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+        timeZone: 'America/Sao_Paulo'  // Fuso horário de São Paulo
+    };
+    
+    return data.toLocaleDateString('pt-BR', opcoes);
+}
+
 // Carregar pontos de um funcionário
 async function carregarPontos(funcionarioId) {
     try {
@@ -96,10 +115,12 @@ async function carregarPontos(funcionarioId) {
         
         // Preencher tabela
         data.forEach(ponto => {
-            const horario = new Date(ponto.horario);
+            // Usar a função formatarDataHora para exibir o horário correto
+            const horarioFormatado = formatarDataHora(ponto.horario);
+            
             pontosTable.innerHTML += `
                 <tr class="border-b border-gray-200 hover:bg-gray-100">
-                    <td class="py-3 px-6 text-left">${horario.toLocaleString('pt-BR')}</td>
+                    <td class="py-3 px-6 text-left">${horarioFormatado}</td>
                     <td class="py-3 px-6 text-left ${ponto.tipo === 'Entrada' ? 'text-green-600' : 'text-red-600'}">${ponto.tipo}</td>
                 </tr>
             `;
@@ -126,6 +147,9 @@ async function carregarPontos(funcionarioId) {
 // Adicionar funcionário
 async function adicionarFuncionario(dados) {
     try {
+        // Imprima os dados para debug
+        console.log('Enviando dados:', JSON.stringify(dados));
+        
         const response = await fetch(`${API_BASE_URL}/funcionarios/`, {
             method: 'POST',
             headers: {
@@ -135,12 +159,22 @@ async function adicionarFuncionario(dados) {
         });
         
         if (response.ok) {
+            const resultado = await response.json();
+            console.log('Resposta:', resultado);
             await carregarFuncionarios();
             showToast('Funcionário adicionado com sucesso');
             return true;
         } else {
-            const error = await response.json();
-            throw new Error(error.detail || 'Erro ao adicionar funcionário');
+            // Tente ler a resposta de erro, mesmo se não for JSON
+            let errorText;
+            try {
+                const error = await response.json();
+                errorText = error.detail || 'Erro ao adicionar funcionário';
+            } catch (e) {
+                // Se não conseguir parsear como JSON, use o texto da resposta
+                errorText = await response.text();
+            }
+            throw new Error(errorText);
         }
     } catch (error) {
         console.error('Erro ao adicionar funcionário:', error);
@@ -226,11 +260,26 @@ document.addEventListener('DOMContentLoaded', () => {
     funcionarioForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
+        const salarioValue = parseFloat(salario.value);
+        
+        if (isNaN(salarioValue)) {
+            showToast('Salário deve ser um número válido', false);
+            return;
+        }
+        
         const dados = {
-            nome: nome.value,
-            cargo: cargo.value,
-            salario: parseFloat(salario.value)
+            nome: nome.value.trim(),
+            cargo: cargo.value.trim(),
+            salario: salarioValue
         };
+        
+        console.log('Dados a serem enviados:', dados);
+        
+        // Verificar se há campos vazios
+        if (!dados.nome || !dados.cargo) {
+            showToast('Preencha todos os campos', false);
+            return;
+        }
         
         const sucesso = await adicionarFuncionario(dados);
         

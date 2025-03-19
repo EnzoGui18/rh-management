@@ -1,9 +1,7 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.database import Base
-
-
 
 class Funcionario(Base):
     __tablename__ = "funcionarios"
@@ -19,6 +17,7 @@ class Ponto(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     funcionario_id = Column(Integer, ForeignKey("funcionarios.id"), nullable=False)
-    horario = Column(DateTime, default=datetime.utcnow)
+    # Usando func.now() do SQLAlchemy para que o banco de dados controle o horário
+    horario = Column(DateTime, server_default=func.now(), nullable=False)
     tipo = Column(String(10), nullable=False)  # Entrada ou Saída
     funcionario = relationship("Funcionario", back_populates="pontos")
